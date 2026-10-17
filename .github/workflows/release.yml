@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+name: release
+# A tag v* builds the plugin jar and publishes it with the Groovy script on
+# the GitHub release. Alpha tags are pre-releases: the README's rollout
+# applies, observe mode first.
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - run: mvn -q -DskipTests=false package
+      - run: |
+          mkdir -p dist
+          cp target/hibou-artifactory-plugin-*.jar dist/
+          cp src/main/groovy/hibou.groovy dist/
+          cp bench/hibou.properties dist/hibou.properties.example
+          (cd dist && sha256sum * > SHA256SUMS)
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          body_path: RELEASE-NOTES.md

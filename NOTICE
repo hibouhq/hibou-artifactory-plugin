@@ -1,0 +1,8 @@
+hibou-artifactory-plugin
+Copyright 2026 the Hibou authors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE). This
+repository is licensed apart from Hibou itself, which is distributed under
+the GNU Affero General Public License v3; nothing from the Hibou code base
+is included here. The plugin talks to Hibou only through its versioned
+HTTP policy endpoint.

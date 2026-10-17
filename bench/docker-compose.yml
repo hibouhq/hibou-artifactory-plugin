@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: Apache-2.0
+# Load-test bench (README "Rollout"): Artifactory Pro with a trial licence
+# and a Hibou server, both on one network. The plugin directory is mounted
+# into Artifactory's plugin folder; `bench/run.sh` drives npm installs
+# through the proxy and reads hibouMetrics.
+services:
+  artifactory:
+    image: releases-docker.jfrog.io/jfrog/artifactory-pro:7.98.11
+    ports:
+      - "8082:8082"
+    environment:
+      JF_SHARED_DATABASE_TYPE: postgresql
+      JF_SHARED_DATABASE_DRIVER: org.postgresql.Driver
+      JF_SHARED_DATABASE_URL: jdbc:postgresql://artifactory-db:5432/artifactory
+      JF_SHARED_DATABASE_USERNAME: artifactory
+      JF_SHARED_DATABASE_PASSWORD: artifactory
+    volumes:
+      - ../src/main/groovy/hibou.groovy:/opt/jfrog/artifactory/var/etc/artifactory/plugins/hibou.groovy:ro
+      - ./target-lib:/opt/jfrog/artifactory/var/etc/artifactory/plugins/lib:ro
+      - ./hibou.properties:/opt/jfrog/artifactory/var/etc/artifactory/plugins/hibou.properties:ro
+    depends_on:
+      - artifactory-db
+      - hibou
+  artifactory-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: artifactory
+      POSTGRES_PASSWORD: artifactory
+      POSTGRES_DB: artifactory
+  hibou:
+    image: ghcr.io/hibouhq/hibou:latest
+    ports:
+      - "8080:8080"
+    environment:
+      HIBOU_DATABASE_URL: postgres://hibou:hibou@hibou-db:5432/hibou?sslmode=disable
+      HIBOU_DEPSDEV_ENABLED: "true"
+    depends_on:
+      - hibou-db
+  hibou-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: hibou
+      POSTGRES_PASSWORD: hibou
+      POSTGRES_DB: hibou
